@@ -12,16 +12,34 @@ public class Shotgun : MonoBehaviour
     
     [Header("Ammo & Fire Rate")]
     [SerializeField] private float fireRate = 1f; 
-    [SerializeField] private int magSize = 5; // ความจุกระสุนในปืน (นัด)
-    [SerializeField] private int startingTotalAmmo = 15; // กระสุนสำรองเริ่มต้น
-    [SerializeField] private int maxTotalAmmo = 50; // พกกระสุนสำรองได้มากสุด
+    [SerializeField] private int magSize = 5; 
+    [SerializeField] private int startingTotalAmmo = 15; 
+    [SerializeField] private int maxTotalAmmo = 50; 
     [SerializeField] private KeyCode reloadKey = KeyCode.R; 
+
+    // ==========================================
+    // ระบบชาร์จยิง (Charge Shot & Visuals)
+    // ==========================================
+    [Header("Charge Mechanics")]
+    [SerializeField] private float chargeTimeRequired = 1f; 
+    [SerializeField] private float chargedDamageMultiplier = 2f; 
+    [SerializeField] private float chargedRecoilMultiplier = 1.5f; 
+    [SerializeField] private float chargeShakeAmount = 5f; 
+    
+    [Header("Charge Visuals (UI & Colors)")]
+    [SerializeField] private Image chargeGaugeUI; // ลาก UI หลอดชาร์จมาใส่ตรงนี้
+    [SerializeField] private Color normalTraceColor = Color.yellow; // สีปกติ
+    [SerializeField] private Color chargedTraceColor = Color.cyan; // สีฟ้าตอนชาร์จเต็ม
+
+    private bool isCharging = false;
+    private float currentChargeTime = 0f;
+    // ==========================================
     
     [Header("Effects")]
     [SerializeField] private GameObject bulletTracePrefab;
 
     [Header("Audio Settings")]
-    [Range(0f, 1f)] [Tooltip("ตัวคูณความดังเฉพาะของปืน (0 = ปิดเสียง, 1 = ดังสุด)")]
+    [Range(0f, 1f)]
     [SerializeField] private float gunVolumeScale = 1f;
     [SerializeField] private AudioClip shootSound;
     [SerializeField] private AudioClip reloadSound;
@@ -31,7 +49,7 @@ public class Shotgun : MonoBehaviour
     [Header("Mobility & External Recoil")]
     [SerializeField] private float playerRecoilForce = 15f; 
 
-    [Header("2D Animation (Sprite Swap)")]
+    [Header("2D Animation")]
     [SerializeField] private RectTransform gunRectTransform; 
     [SerializeField] private Image gunImage; 
     [SerializeField] private Sprite idleSprite; 
@@ -39,16 +57,12 @@ public class Shotgun : MonoBehaviour
     [SerializeField] private Sprite[] pumpFrames; 
     [SerializeField] private float timePerFrame = 0.05f; 
     
-    [Header("Dynamic: Weapon Sway (Look)")]
+    [Header("Dynamic Settings")]
     [SerializeField] private float swayAmount = 8f;
     [SerializeField] private float maxSwayAmount = 15f;
     [SerializeField] private float swaySmoothness = 10f;
-
-    [Header("Dynamic: Movement Bob (Walk/Run)")]
     [SerializeField] private float bobSpeed = 12f;
     [SerializeField] private float bobAmount = 15f;
-
-    [Header("Dynamic: Punchy Recoil Feel")]
     [SerializeField] private Vector2 recoilKickback = new Vector2(0f, -150f); 
     [SerializeField] private float recoilRotation = 12f; 
     [SerializeField] private float recoilRecoverySpeed = 10f; 
@@ -62,9 +76,8 @@ public class Shotgun : MonoBehaviour
     private Vector2 originalPosition;
     private float nextFireTime = 0f;
     
-    // ตัวแปรระบบกระสุน
-    private int currentAmmo; // กระสุนในปืนตอนนี้
-    private int totalAmmo;   // กระสุนสำรองทั้งหมด
+    private int currentAmmo; 
+    private int totalAmmo;   
 
     private Vector2 currentSway;
     private Vector2 currentBob;
@@ -74,7 +87,6 @@ public class Shotgun : MonoBehaviour
 
     void Start()
     {
-        // เริ่มเกมมา เติมกระสุนให้เต็มแม็ก และตั้งค่ากระสุนสำรอง
         currentAmmo = magSize; 
         totalAmmo = startingTotalAmmo;
 
@@ -83,43 +95,73 @@ public class Shotgun : MonoBehaviour
         if (playerMovement == null) playerMovement = GetComponentInParent<PlayerMovement>();
         if (gunImage != null && idleSprite != null) gunImage.sprite = idleSprite;
 
-        // สังเคราะห์ AudioSource เข้ากับปืนเพื่อเล่นเสียงดึงจากค่า Slider VFXVol
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
         audioSource.volume = PlayerPrefs.GetFloat("VFXVol", 1f) * gunVolumeScale;
+
+        // ซ่อนหลอดชาร์จตอนเริ่มเกม
+        if (chargeGaugeUI != null) chargeGaugeUI.fillAmount = 0f;
     }
 
     void Update()
     {   
         if (Time.timeScale == 0f) return;
         
-        // ระบบยิง
         if (Input.GetMouseButtonDown(0) && !isShooting && !isReloading && Time.time >= nextFireTime)
         {
             if (currentAmmo > 0)
             {
-                StartCoroutine(ShootSequence());
+                isCharging = true;
+                currentChargeTime = 0f;
             }
             else if (totalAmmo > 0)
             {
-                // ถ้าในปืนหมด แต่มีกระสุนสำรอง ให้รีโหลด
                 StartCoroutine(ReloadSequence());
             }
             else
             {
-                // กระสุนหมดเกลี้ยง! เล่นเสียงแกร๊ก
                 if (emptyGunSound != null) 
                 {
                     audioSource.clip = emptyGunSound;
                     audioSource.Play();
                 }
-                Debug.Log("Out of Ammo!");
             }
         }
 
-        // กดรีโหลดด้วยปุ่ม R (ต้องกระสุนในปืนไม่เต็ม และมีกระสุนสำรองเหลือ)
+        // --- ระบบอัปเดตหลอดชาร์จ ---
+        if (isCharging)
+        {
+            if (Input.GetMouseButton(0))
+            {
+                currentChargeTime += Time.deltaTime; 
+                // ค่อยๆ เติมหลอด UI ให้เต็มตามเปอร์เซ็นต์
+                if (chargeGaugeUI != null)
+                {
+                    chargeGaugeUI.fillAmount = Mathf.Clamp01(currentChargeTime / chargeTimeRequired);
+                    
+                    // เปลี่ยนสีหลอดให้รู้ว่าเต็มแล้ว
+                    if (currentChargeTime >= chargeTimeRequired)
+                        chargeGaugeUI.color = chargedTraceColor;
+                    else
+                        chargeGaugeUI.color = normalTraceColor;
+                }
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                bool isChargedShot = currentChargeTime >= chargeTimeRequired;
+                StartCoroutine(ShootSequence(isChargedShot));
+                
+                isCharging = false;
+                currentChargeTime = 0f;
+                if (chargeGaugeUI != null) chargeGaugeUI.fillAmount = 0f; // ล้างหลอดชาร์จ
+            }
+        }
+
         if (Input.GetKeyDown(reloadKey) && !isShooting && !isReloading && currentAmmo < magSize && totalAmmo > 0)
         {
+            isCharging = false; 
+            if (chargeGaugeUI != null) chargeGaugeUI.fillAmount = 0f;
             StartCoroutine(ReloadSequence());
         }
 
@@ -152,39 +194,49 @@ public class Shotgun : MonoBehaviour
         currentRecoilPos = Vector2.Lerp(currentRecoilPos, Vector2.zero, Time.deltaTime * recoilRecoverySpeed);
         currentRecoilRot = Mathf.Lerp(currentRecoilRot, 0f, Time.deltaTime * recoilRecoverySpeed);
 
-        gunRectTransform.anchoredPosition = originalPosition + currentSway + currentBob + currentRecoilPos;
+        Vector2 chargeShake = Vector2.zero;
+        if (isCharging && currentChargeTime >= chargeTimeRequired)
+        {
+            chargeShake = new Vector2(Random.Range(-chargeShakeAmount, chargeShakeAmount), Random.Range(-chargeShakeAmount, chargeShakeAmount));
+        }
+
+        gunRectTransform.anchoredPosition = originalPosition + currentSway + currentBob + currentRecoilPos + chargeShake;
         float tiltOffset = currentSway.x * 0.2f; 
         gunRectTransform.localRotation = Quaternion.Euler(0, 0, currentRecoilRot + tiltOffset);
     }
 
-    private IEnumerator ShootSequence()
+    private IEnumerator ShootSequence(bool isChargedShot)
     {
         isShooting = true;
-        currentAmmo--; // หักกระสุนในปืน 1 นัด
+        currentAmmo--; 
         nextFireTime = Time.time + fireRate; 
 
-        // เล่นเสียงยิงปืน
         if (shootSound != null) 
         {
             audioSource.clip = shootSound;
             audioSource.Play();
         } 
 
+        float recoilForce = isChargedShot ? playerRecoilForce * chargedRecoilMultiplier : playerRecoilForce;
+        float damageMult = isChargedShot ? chargedDamageMultiplier : 1f;
+        float visualKickMult = isChargedShot ? 1.5f : 1f; 
+
         float randomRot = Random.Range(-recoilRotation, recoilRotation);
         float randomX = Random.Range(-30f, 30f); 
         
-        currentRecoilPos = recoilKickback + new Vector2(randomX, 0); 
-        currentRecoilRot = randomRot; 
+        currentRecoilPos = recoilKickback * visualKickMult + new Vector2(randomX, 0); 
+        currentRecoilRot = randomRot * visualKickMult; 
 
         if (fireFrames.Length > 0)
         {
             gunImage.sprite = fireFrames[0];
-            FirePellets();
+            // ส่งสถานะชาร์จไปที่ลูกปราย
+            FirePellets(damageMult, isChargedShot); 
 
             if (playerMovement != null)
             {
                 Vector3 recoilDir = -playerCamera.transform.forward;
-                playerMovement.ApplyRecoil(recoilDir * playerRecoilForce);
+                playerMovement.ApplyRecoil(recoilDir * recoilForce);
             }
 
             yield return new WaitForSeconds(timePerFrame);
@@ -196,7 +248,6 @@ public class Shotgun : MonoBehaviour
             }
         }
 
-        // Pump action animation
         if (pumpFrames.Length > 0)
         {
             for (int i = 0; i < pumpFrames.Length; i++)
@@ -213,22 +264,15 @@ public class Shotgun : MonoBehaviour
     private IEnumerator ReloadSequence()
     {
         isReloading = true;
-
-        // เล่นเสียงรีโหลด (อาจจะดึงความยาวของ Animation ให้ตรงกับเสียงได้)
         if (reloadSound != null) 
         {
             audioSource.clip = reloadSound;
             audioSource.Play();
         }
 
-        // คำนวณจำนวนกระสุนที่ต้องหยิบมาจากกระเป๋า
         int ammoNeeded = magSize - currentAmmo;
-        if (totalAmmo < ammoNeeded) 
-        {
-            ammoNeeded = totalAmmo; // ถ้ากระสุนสำรองมีไม่พอเติมเต็มแม็ก ก็หยิบมาเท่าที่มี
-        }
+        if (totalAmmo < ammoNeeded) ammoNeeded = totalAmmo; 
 
-        // ดันปืนลงเพื่อซ่อนตอนรีโหลด
         currentRecoilPos = new Vector2(0, -50f);
         currentRecoilRot = 15f;
 
@@ -244,17 +288,16 @@ public class Shotgun : MonoBehaviour
             }
         }
 
-        // โอนย้ายกระสุนจากสำรองมาใส่ปืน
         totalAmmo -= ammoNeeded;
         currentAmmo += ammoNeeded; 
-        
         gunImage.sprite = idleSprite;
         isReloading = false;
     }
 
-    private void FirePellets()
+    private void FirePellets(float damageMultiplier, bool isChargedShot)
     {
         Vector3 fakeBarrelEnd = playerCamera.transform.position + playerCamera.transform.forward * 0.8f - playerCamera.transform.up * 0.2f + playerCamera.transform.right * 0.2f;
+        float finalDamage = damagePerPellet * damageMultiplier;
 
         for (int i = 0; i < pelletCount; i++)
         {
@@ -265,43 +308,47 @@ public class Shotgun : MonoBehaviour
             if (Physics.Raycast(playerCamera.transform.position, spread, out RaycastHit hit, range))
             {
                 EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-                if (enemy != null)
-                {
-                    enemy.TakeDamage(damagePerPellet);
-                }
+                if (enemy != null) enemy.TakeDamage(finalDamage);
                 
-                SpawnTrace(fakeBarrelEnd, hit.point);
+                SpawnTrace(fakeBarrelEnd, hit.point, isChargedShot);
             }
             else
             {
-                SpawnTrace(fakeBarrelEnd, playerCamera.transform.position + spread * range);
+                SpawnTrace(fakeBarrelEnd, playerCamera.transform.position + spread * range, isChargedShot);
             }
         }
     }
 
-    private void SpawnTrace(Vector3 start, Vector3 end)
+    private void SpawnTrace(Vector3 start, Vector3 end, bool isChargedShot)
     {
         if (bulletTracePrefab != null)
         {
             GameObject trace = Instantiate(bulletTracePrefab, start, Quaternion.identity);
             BulletTrace traceScript = trace.GetComponent<BulletTrace>();
+            
             if (traceScript != null)
             {
                 traceScript.SetTrace(start, end);
+                
+                // สั่งเปลี่ยนสีตามสถานะการชาร์จ
+                if (isChargedShot)
+                {
+                    // เปลี่ยนเป็นสีฟ้า (ตั้งค่าไว้ใน Inspector)
+                    traceScript.SetColor(chargedTraceColor, Color.blue);
+                }
+                else
+                {
+                    // ใช้สีปกติ
+                    traceScript.SetColor(normalTraceColor, new Color(1f, 0.5f, 0f)); // สีส้มปลายๆ
+                }
             }
         }
     }
 
-    // ===============================================
-    // ฟังก์ชันใหม่: เอาไว้เรียกตอนเก็บกล่อง Ammo Pickup
-    // ===============================================
     public void AddAmmo(int amount)
     {
         totalAmmo += amount;
-        if (totalAmmo > maxTotalAmmo) 
-        {
-            totalAmmo = maxTotalAmmo; // กันไม่ให้พกกระสุนเกินขีดจำกัด
-        }
+        if (totalAmmo > maxTotalAmmo) totalAmmo = maxTotalAmmo; 
     }
 
     public void ApplySettingsFromSave()
@@ -312,7 +359,6 @@ public class Shotgun : MonoBehaviour
         }
     }
 
-    // Getters สำหรับ UI
     public int GetCurrentAmmo() { return currentAmmo; }
     public int GetTotalAmmo() { return totalAmmo; }
 }
