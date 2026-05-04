@@ -89,6 +89,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundDistance = 0.4f;
     [SerializeField] private LayerMask groundMask;
 
+    // Speed Boost Variables
+    private float speedBoostMultiplier = 1f;
+    private Coroutine activeSpeedBoostRoutine;
+
     // Internal Variables
     private CharacterController controller;
     private Vector3 velocity;
@@ -325,7 +329,8 @@ public class PlayerMovement : MonoBehaviour
                 {
                     targetSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
                     if (Input.GetKey(KeyCode.LeftControl)) targetSpeed = crouchSpeed;
-                    
+                    targetSpeed *= speedBoostMultiplier;
+
                     moveDirection = inputDir;
                 }
 
@@ -727,5 +732,26 @@ public class PlayerMovement : MonoBehaviour
         if (!enableShake) { landShakeMagnitude = 0; }
         else { landShakeMagnitude = defaultLandShake; }
     }
-    
+
+    // ฟังก์ชันเปิดใช้งาน Speed Boost 
+    public void ApplySpeedBoost(float multiplier, float duration)
+    {
+        // ถ้ามีบัฟอยู่แล้ว ให้ยกเลิกอันเก่าก่อนแล้วเริ่มใหม่
+        if (activeSpeedBoostRoutine != null)
+        {
+            StopCoroutine(activeSpeedBoostRoutine);
+        }
+        activeSpeedBoostRoutine = StartCoroutine(SpeedBoostRoutine(multiplier, duration));
+    }
+  
+    private IEnumerator SpeedBoostRoutine(float multiplier, float duration)
+    {
+        speedBoostMultiplier = multiplier; 
+      
+        yield return new WaitForSeconds(duration); 
+
+        speedBoostMultiplier = 1f; 
+        activeSpeedBoostRoutine = null;
+    }
+
 }
