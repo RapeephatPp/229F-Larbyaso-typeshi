@@ -1,20 +1,17 @@
 using UnityEngine;
 
-/// <summary>
-/// Singleton จัดการคะแนนทั้งเกม
-/// ติดไว้บน GameObject ที่ DontDestroyOnLoad เพื่อให้คะแนนสะสมข้าม Scene ได้
-/// </summary>
+
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
 
     // ==============================
-    // คะแนนสะสมจาก Orb
+    
     // ==============================
     [HideInInspector] public int orbScore = 0;
 
     // ==============================
-    // ค่าตั้งต้น Time Bonus (ปรับใน Inspector ได้)
+    
     // ==============================
     [Header("Time Bonus Settings")]
     [Tooltip("คะแนน Time Bonus สูงสุด (ถ้าจบเร็วมาก)")]
@@ -24,13 +21,13 @@ public class ScoreManager : MonoBehaviour
     public int penaltyPerSecond = 10;
 
     // ==============================
-    // ผลลัพธ์หลังคำนวณ (อ่านได้จากภายนอก)
+    
     // ==============================
     [HideInInspector] public int timeBonus = 0;
     [HideInInspector] public int finalScore = 0;
 
     // ==============================
-    // Awake: ตั้ง Singleton + DontDestroyOnLoad
+    
     // ==============================
     private void Awake()
     {
@@ -46,7 +43,7 @@ public class ScoreManager : MonoBehaviour
     }
 
     // ==============================
-    // รีเซตคะแนนทั้งหมด (เรียกตอนเริ่มเกมใหม่จาก MainMenu)
+    
     // ==============================
     public void ResetScore()
     {
@@ -56,7 +53,7 @@ public class ScoreManager : MonoBehaviour
     }
 
     // ==============================
-    // เพิ่มคะแนนจาก Orb
+    
     // ==============================
     public void AddOrbScore(int points)
     {
@@ -65,19 +62,18 @@ public class ScoreManager : MonoBehaviour
     }
 
     // ==============================
-    // คำนวณ Final Score ตอนจบเกม
-    // รับ sessionTime จาก GameManager เข้ามา
+    
     // ==============================
     public int CalculateFinalScore(float sessionTime, string levelName)
     {
-        // คำนวณ Time Bonus
+       
         int rawTimeBonus = baseTimeBonus - Mathf.FloorToInt(sessionTime * penaltyPerSecond);
         timeBonus = Mathf.Max(0, rawTimeBonus); // ไม่ต่ำกว่า 0
 
-        // รวมคะแนนทั้งหมด
+        
         finalScore = orbScore + timeBonus;
 
-        // บันทึก Best Score รายด่าน
+        
         string key = "BestScore_" + levelName;
         int currentBest = PlayerPrefs.GetInt(key, 0);
         if (finalScore > currentBest)
@@ -92,7 +88,7 @@ public class ScoreManager : MonoBehaviour
     }
 
     // ==============================
-    // ดึง Best Score ของด่าน
+    
     // ==============================
     public int GetBestScore(string levelName)
     {
