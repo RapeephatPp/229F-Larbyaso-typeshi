@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 using TMPro; 
 
 public class GameManager : MonoBehaviour
@@ -16,6 +17,16 @@ public class GameManager : MonoBehaviour
     [Header("Game Clear UI")]
     [SerializeField] private TextMeshProUGUI clearTimeText;
     [SerializeField] private TextMeshProUGUI clearBestTimeText;
+    
+    [Header("Game Clear UI - Score")]
+    [Tooltip("Text แสดงคะแนนจาก Orb เช่น ORB SCORE: 500")]
+    [SerializeField] private TextMeshProUGUI clearOrbScoreText;
+    [Tooltip("Text แสดง Time Bonus เช่น TIME BONUS: +3200")]
+    [SerializeField] private TextMeshProUGUI clearTimeBonusText;
+    [Tooltip("Text แสดงคะแนนรวม เช่น FINAL SCORE: 3700")]
+    [SerializeField] private TextMeshProUGUI clearFinalScoreText;
+    [Tooltip("Text แสดง Best Score เช่น BEST SCORE: 3700")]
+    [SerializeField] private TextMeshProUGUI clearBestScoreText;
 
     [Header("Level Information")]
     [HideInInspector] public string currentLevelName;
@@ -74,6 +85,8 @@ public class GameManager : MonoBehaviour
         currentLevelName = SceneManager.GetActiveScene().name;
         bestTime = PlayerPrefs.GetFloat("BestTime_" + currentLevelName, 0f); 
         
+        // โหลด Game Clear Panel จาก Resources อัตโนมัติ (ถ้ายังไม่ได้ assign ใน Inspector)
+        InitGameClearPanel();
     }
 
     private void Update()
@@ -105,6 +118,93 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.SetFloat("BestTime_" + currentLevelName, bestTime);
             PlayerPrefs.Save();
             Debug.Log("New Best Time for " + currentLevelName + ": " + bestTime);
+        }
+    }
+
+    // ==============================
+    // AUTO-INIT GAME CLEAR PANEL จาก Resources
+    // ทำงานอัตโนมัติทุก Stage ไม่ต้องตั้งค่าใน Inspector
+    // ==============================
+    private void InitGameClearPanel()
+    {
+        // ถ้า assign ใน Inspector แล้ว ข้ามไปได้เลย
+        if (gameClearPanel != null)
+        {
+            WireButtonEvents(gameClearPanel);
+            return;
+        }
+
+        // โหลด Prefab จาก Resources/Prefabs/
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/GameClearPanel");
+        if (prefab == null)
+        {
+            Debug.LogError("[GameManager] ไม่พบ GameClearPanel Prefab!\n" +
+                           "กรุณารันเมนู: Tools → Score System → Save Game Clear Panel as Prefab ก่อน");
+            return;
+        }
+
+        // หา Canvas ในฉาก (ถ้าไม่มีสร้างใหม่)
+        Canvas canvas = FindFirstObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            GameObject canvasObj = new GameObject("Canvas");
+            canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasObj.AddComponent<CanvasScaler>();
+            canvasObj.AddComponent<GraphicRaycaster>();
+        }
+
+        // EventSystem (ถ้าไม่มีปุ่มกดไม่ได้)
+        if (FindFirstObjectByType<EventSystem>() == null)
+        {
+            GameObject es = new GameObject("EventSystem");
+            es.AddComponent<EventSystem>();
+            es.AddComponent<StandaloneInputModule>();
+        }
+
+        // Instantiate Panel
+        gameClearPanel = Instantiate(prefab, canvas.transform);
+        gameClearPanel.SetActive(false);
+
+        // หา Text references จากชื่อ Child Object
+        Transform card = gameClearPanel.transform.Find("CardBackground");
+        if (card == null)
+        {
+            Debug.LogError("[GameManager] ไม่พบ CardBackground ใน GameClearPanel Prefab!");
+            return;
+        }
+
+        clearTimeText       = card.Find("ClearTimeText")?.GetComponent<TextMeshProUGUI>();
+        clearBestTimeText   = card.Find("ClearBestTimeText")?.GetComponent<TextMeshProUGUI>();
+        clearOrbScoreText   = card.Find("OrbScoreText")?.GetComponent<TextMeshProUGUI>();
+        clearTimeBonusText  = card.Find("TimeBonusText")?.GetComponent<TextMeshProUGUI>();
+        clearFinalScoreText = card.Find("FinalScoreText")?.GetComponent<TextMeshProUGUI>();
+        clearBestScoreText  = card.Find("BestScoreText")?.GetComponent<TextMeshProUGUI>();
+
+        // เชื่อมปุ่ม
+        WireButtonEvents(gameClearPanel);
+
+        Debug.Log("[GameManager] ✅ โหลด GameClearPanel สำเร็จ! (Auto-loaded from Resources)");
+    }
+
+    // เชื่อมปุ่มใน Panel กับฟังก์ชันของ GameManager
+    private void WireButtonEvents(GameObject panel)
+    {
+        Transform card = panel.transform.Find("CardBackground");
+        if (card == null) return;
+
+        Button restartBtn  = card.Find("RestartButton")?.GetComponent<Button>();
+        Button mainMenuBtn = card.Find("MainMenuButton")?.GetComponent<Button>();
+
+        if (restartBtn != null)
+        {
+            restartBtn.onClick.RemoveAllListeners();
+            restartBtn.onClick.AddListener(RestartGame);
+        }
+        if (mainMenuBtn != null)
+        {
+            mainMenuBtn.onClick.RemoveAllListeners();
+            mainMenuBtn.onClick.AddListener(LoadMainMenu);
         }
     }
 
@@ -262,7 +362,9 @@ public class GameManager : MonoBehaviour
     {
         isSessionTimerActive = false; // หยุดเวลา Speedrun
 
-        // คำนวณหา Best Time ของ "ทั้งเกม" (เซฟแยกจากแบบรายด่าน)
+        // ==============================
+        // คำนวณ Best Time
+        // ==============================
         float fullGameBest = PlayerPrefs.GetFloat("FullGameBestTime", 0f);
         if (fullGameBest == 0f || sessionTime < fullGameBest)
         {
@@ -271,9 +373,41 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.Save();
         }
 
-        // แสดงผลตัวเลขลงบน UI
-        if (clearTimeText != null) clearTimeText.text = "YOUR TIME: " + FormatTime(sessionTime);
-        if (clearBestTimeText != null) clearBestTimeText.text = "BEST TIME: " + FormatTime(fullGameBest);
+        // ==============================
+        // คำนวณ Score ผ่าน ScoreManager
+        // ==============================
+        int orbScore = 0;
+        int timeBonus = 0;
+        int finalScore = 0;
+        int bestScore = 0;
+
+        if (ScoreManager.Instance != null)
+        {
+            finalScore = ScoreManager.Instance.CalculateFinalScore(sessionTime, currentLevelName);
+            orbScore   = ScoreManager.Instance.orbScore;
+            timeBonus  = ScoreManager.Instance.timeBonus;
+            bestScore  = ScoreManager.Instance.GetBestScore(currentLevelName);
+        }
+
+        // ==============================
+        // แสดงผลลงบน UI — เวลา
+        // ==============================
+        if (clearTimeText != null)
+            clearTimeText.text = "YOUR TIME: " + FormatTime(sessionTime);
+        if (clearBestTimeText != null)
+            clearBestTimeText.text = "BEST TIME: " + FormatTime(fullGameBest);
+
+        // ==============================
+        // แสดงผลลงบน UI — Score
+        // ==============================
+        if (clearOrbScoreText != null)
+            clearOrbScoreText.text = "ORB SCORE: " + orbScore.ToString("N0");
+        if (clearTimeBonusText != null)
+            clearTimeBonusText.text = "TIME BONUS: +" + timeBonus.ToString("N0");
+        if (clearFinalScoreText != null)
+            clearFinalScoreText.text = "FINAL SCORE: " + finalScore.ToString("N0");
+        if (clearBestScoreText != null)
+            clearBestScoreText.text = "BEST SCORE: " + bestScore.ToString("N0");
 
         // เปิดหน้าต่างจบเกม และหยุดเวลา
         gameClearPanel.SetActive(true);

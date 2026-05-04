@@ -8,6 +8,8 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] TextMeshProUGUI stateText;
     [SerializeField] TextMeshProUGUI maxSpeedText; 
     [SerializeField] TextMeshProUGUI ammoText; 
+    [Tooltip("Text แสดงคะแนนสะสมแบบรีอลไทม์ระหว่างเล่น")]
+    [SerializeField] TextMeshProUGUI scoreText;
     
     [Header("Level Info UI")]
     [SerializeField] TextMeshProUGUI levelText;    // ชื่อด่าน
@@ -73,6 +75,13 @@ public class PlayerHUD : MonoBehaviour
                 else
                     bestTimeText.text = "BEST: --:--.--"; // ถ้ายังไม่มีสถิติให้โชว์ขีด
             }
+        }
+
+        // แสดงคะแนนสะสมจาก Orb (รีอลไทม์)
+        if (scoreText != null)
+        {
+            int currentOrbScore = ScoreManager.Instance != null ? ScoreManager.Instance.orbScore : 0;
+            scoreText.text = "SCORE: " + currentOrbScore.ToString("N0");
         }
     }
     
