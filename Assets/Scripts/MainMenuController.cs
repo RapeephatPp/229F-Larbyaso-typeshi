@@ -77,9 +77,9 @@ public class MainMenuController : MonoBehaviour
         GameManager.isSessionTimerActive = true;
 
         if (SceneFader.Instance != null)
-            SceneFader.Instance.FadeToScene("SampleScene"); 
+            SceneFader.Instance.FadeToScene("Level1"); 
         else
-            SceneManager.LoadScene("SampleScene"); 
+            SceneManager.LoadScene("Level1"); 
     }
 
     public void OpenOptions() { SwitchPanel(optionsPanel); }
