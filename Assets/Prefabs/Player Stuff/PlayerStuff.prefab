@@ -2932,7 +2932,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -65}
+  m_AnchoredPosition: {x: 0, y: -55}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6302292506532686632
@@ -8369,7 +8369,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -135, y: 138}
+  m_AnchoredPosition: {x: -135, y: 67.3}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2908859501426474840
@@ -8812,6 +8812,8 @@ MonoBehaviour:
   wallJumpPushForce: 6
   wallRunCameraTilt: 15
   wallJumpCooldown: 0.4
+  wallRunDrag: 3
+  minWallRunSpeed: 8
   speedLinesParticle: {fileID: 6082099662326894160}
   minSpeedToShowLines: 13
   maxParticleEmission: 75
@@ -8834,10 +8836,10 @@ MonoBehaviour:
   jumpDipAmount: 0.15
   landDipAmount: 0.25
   mouseSensitivity: 500
-  walkLoopSound: {fileID: 0}
-  runLoopSound: {fileID: 0}
-  jumpSound: {fileID: 0}
-  landSound: {fileID: 0}
+  walkLoopSound: {fileID: 8300000, guid: 3ec35bd65836be44ba7f08392057d31a, type: 3}
+  runLoopSound: {fileID: 8300000, guid: 3ec35bd65836be44ba7f08392057d31a, type: 3}
+  jumpSound: {fileID: 8300000, guid: 259e7bfd640546941851e709c3d05039, type: 3}
+  landSound: {fileID: 8300000, guid: 259e7bfd640546941851e709c3d05039, type: 3}
   groundCheck: {fileID: 3803026239172075955}
   groundDistance: 0.4
   groundMask:
@@ -9348,9 +9350,9 @@ MonoBehaviour:
   chargedTraceColor: {r: 0, g: 1, b: 1, a: 1}
   bulletTracePrefab: {fileID: 6110824621303878564, guid: 52a8525abd42c194a9bd2f4cf124ba13, type: 3}
   gunVolumeScale: 1
-  shootSound: {fileID: 0}
-  reloadSound: {fileID: 0}
-  emptyGunSound: {fileID: 0}
+  shootSound: {fileID: 8300000, guid: 497ff547625d1c2449158b4e644b24f5, type: 3}
+  reloadSound: {fileID: 8300000, guid: a35bd224b963a8e41be6d454b021b029, type: 3}
+  emptyGunSound: {fileID: 8300000, guid: 059b105ec0526a949b5052128bf759df, type: 3}
   playerRecoilForce: 15
   gunRectTransform: {fileID: 3692163208058240900}
   gunImage: {fileID: 665248275346902708}
@@ -13880,7 +13882,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -135, y: 37}
+  m_AnchoredPosition: {x: -135, y: 4.7}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5037857629302064922

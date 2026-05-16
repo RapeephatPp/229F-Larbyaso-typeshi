@@ -40,6 +40,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float wallRunCameraTilt = 15f;
     // ปรับ Cooldown เพิ่มขึ้นเป็น 0.4 วินาที เพื่อให้มีเวลาลอยตัวหนีกำแพง
     [SerializeField] private float wallJumpCooldown = 0.4f; 
+    [SerializeField] private float wallRunDrag = 3f;      
+    [SerializeField] private float minWallRunSpeed = 8f;
 
     [Header("Game Feel - Particle Speed Lines")] 
     [SerializeField] private ParticleSystem speedLinesParticle;
@@ -114,6 +116,7 @@ public class PlayerMovement : MonoBehaviour
     private float defaultWalkBob;
     private float defaultRunBob;
     private float defaultLandShake;
+    private bool canWallRun = true;
     
     // Camera Effect Variables
     private Vector3 cameraBaseLocalPos;
@@ -212,7 +215,9 @@ public class PlayerMovement : MonoBehaviour
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
         if (isGrounded && !wasGrounded)
-        {
+        {   
+            canWallRun = true;
+            
             if (landSound != null) 
             {
                 effectSource.clip = landSound;
@@ -263,8 +268,15 @@ public class PlayerMovement : MonoBehaviour
         bool wallRight = Physics.Raycast(chestPos, transform.right, out RaycastHit rightHit, wallCheckDistance, groundMask);
         bool wallLeft = Physics.Raycast(chestPos, -transform.right, out RaycastHit leftHit, wallCheckDistance, groundMask);
 
-        if ((wallLeft || wallRight) && Input.GetAxisRaw("Vertical") > 0)
+        // [จุดแก้] เพิ่มเงื่อนไข && canWallRun เข้าไป
+        if ((wallLeft || wallRight) && Input.GetAxisRaw("Vertical") > 0 && canWallRun)
         {
+            if (!isWallRunning)
+            {
+                float targetWallSpeed = runSpeed * speedBoostMultiplier;
+                currentSpeed = Mathf.Max(currentSpeed, targetWallSpeed);
+            }
+
             isWallRunning = true;
             isWallSliding = false;
             currentWallHit = wallRight ? rightHit : leftHit;
@@ -277,11 +289,19 @@ public class PlayerMovement : MonoBehaviour
                 wallForward = -wallForward;
             }
 
-            moveDirection = wallForward;
-            currentSpeed = runSpeed;
-            
-            controller.Move((moveDirection * currentSpeed + -wallNormal * 2f) * Time.deltaTime);
-            return;
+            currentSpeed -= wallRunDrag * Time.deltaTime;
+
+            if (currentSpeed < minWallRunSpeed)
+            {
+                isWallRunning = false;
+                canWallRun = false; // [จุดแก้สำคัญ] ตัดสิทธิ์การไต่กำแพง! ห้ามบูสต์กลับไปใหม่เด็ดขาด
+            }
+            else
+            {
+                moveDirection = Vector3.Lerp(moveDirection, wallForward, Time.deltaTime * 15f).normalized;
+                controller.Move((moveDirection * currentSpeed + -wallNormal * 4f) * Time.deltaTime);
+                return;
+            }
         }
 
         isWallRunning = false;
@@ -418,7 +438,9 @@ public class PlayerMovement : MonoBehaviour
             if (TryClimbLedge()) return;
 
             if (isWallSliding || isWallRunning)
-            {
+            {   
+                canWallRun = true;
+                
                 if (jumpSound != null) 
                 {
                     effectSource.clip = jumpSound;
@@ -432,7 +454,7 @@ public class PlayerMovement : MonoBehaviour
                 // [THE FIX] - Multiply the wall normal by 1.5 to guarantee a strong push AWAY from the wall
                 Vector3 jumpDir = (currentWallHit.normal * 1.5f + transform.forward).normalized; 
                 moveDirection = jumpDir; 
-                currentSpeed = wallJumpPushForce;
+                currentSpeed = Mathf.Max(currentSpeed, wallJumpPushForce);
                 
                 wallJumpTimer = wallJumpCooldown; 
                 jumpsRemaining = 1;
@@ -600,7 +622,7 @@ public class PlayerMovement : MonoBehaviour
         {
             if (isWallRunning)
             {
-                velocity.y = wallRunGravity; 
+                velocity.y = Mathf.Lerp(velocity.y, wallRunGravity, Time.deltaTime * 5f); 
             }
             else
             {
@@ -608,7 +630,7 @@ public class PlayerMovement : MonoBehaviour
                 
                 if (isWallSliding && velocity.y < wallSlideSpeed)
                 {
-                    velocity.y = wallSlideSpeed;
+                    velocity.y = Mathf.Lerp(velocity.y, wallSlideSpeed, Time.deltaTime * 10f);
                 }
             }
         }
