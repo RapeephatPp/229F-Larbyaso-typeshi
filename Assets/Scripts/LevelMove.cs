@@ -7,6 +7,10 @@ public class LevelMove : MonoBehaviour
     public string nextSceneName;
     public bool useBuildIndex = true;
 
+    [Header("Progression")]
+    [Tooltip("เมื่อเข้าประตูนี้ จะปลดล็อกด่านเบอร์อะไร (เช่น ผ่านด่าน 1 ให้เซ็ตค่านี้เป็น 2 เพื่อปลดล็อกด่าน 2)")]
+    public int unlockNextLevelNumber = 2; // [เพิ่มใหม่]
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -17,11 +21,20 @@ public class LevelMove : MonoBehaviour
 
     void GoToNextLevel()
     {
-        Debug.Log("Player reached the exit! Fading to next level...");
+        Debug.Log("Player reached the exit! Loading next level...");
+
+        // --- [เพิ่มใหม่] เซฟการปลดล็อกด่าน ---
+        int currentUnlocked = PlayerPrefs.GetInt("UnlockedLevel", 1);
+        // ถ้าค่าที่เราต้องการจะปลดล็อก มันสูงกว่าด่านที่ผู้เล่นเคยทำได้ ให้เซฟทับเลย
+        if (unlockNextLevelNumber > currentUnlocked)
+        {
+            PlayerPrefs.SetInt("UnlockedLevel", unlockNextLevelNumber);
+            PlayerPrefs.Save();
+        }
+        // ------------------------------------
 
         string targetScene = nextSceneName;
 
-        // ถ้าตั้งให้โหลดด่านตาม Index ให้ไปดึงชื่อด่านถัดไปมา
         if (useBuildIndex)
         {          
             int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
@@ -29,14 +42,13 @@ public class LevelMove : MonoBehaviour
             targetScene = System.IO.Path.GetFileNameWithoutExtension(scenePath);
         }
 
-        // เรียกใช้งาน SceneFader ถ้ามีในฉาก
+        // เรียกใช้งาน SceneFader 
         if (SceneFader.Instance != null)
         {
             SceneFader.Instance.FadeToScene(targetScene);
         }
         else
         {
-            // ถ้าลืมใส่ SceneFader ไว้ ก็ให้โหลดแบบปกติกันเหนียว
             SceneManager.LoadScene(targetScene);
         }
     }
