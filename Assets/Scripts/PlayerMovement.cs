@@ -425,8 +425,9 @@ public class PlayerMovement : MonoBehaviour
             controller.Move(dashDir * dashSpeed * Time.deltaTime);
             yield return null;
         }
-
-        currentSpeed = runSpeed;
+        
+        currentSpeed = Mathf.Max(currentSpeed, dashSpeed); 
+        
         moveDirection = dashDir;
         isDashing = false;
     }
@@ -451,7 +452,6 @@ public class PlayerMovement : MonoBehaviour
 
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
                 
-                // [THE FIX] - Multiply the wall normal by 1.5 to guarantee a strong push AWAY from the wall
                 Vector3 jumpDir = (currentWallHit.normal * 1.5f + transform.forward).normalized; 
                 moveDirection = jumpDir; 
                 currentSpeed = Mathf.Max(currentSpeed, wallJumpPushForce);
