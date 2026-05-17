@@ -319,7 +319,7 @@ public class GameManager : MonoBehaviour
         musicVolSlider.value = PlayerPrefs.GetFloat("MusicVol", 1f);
         vfxVolSlider.value = PlayerPrefs.GetFloat("VFXVol", 1f);
         fovSlider.value = PlayerPrefs.GetFloat("FOV", 60f); 
-        sensSlider.value = PlayerPrefs.GetFloat("Sensitivity", 200f);
+        sensSlider.value = PlayerPrefs.GetFloat("Sensitivity", 900f);
         headBobToggle.isOn = PlayerPrefs.GetInt("HeadBob", 1) == 1;
         screenShakeToggle.isOn = PlayerPrefs.GetInt("ScreenShake", 1) == 1;
         
@@ -339,7 +339,7 @@ public class GameManager : MonoBehaviour
         musicVolSlider.value = 0.5f;
         vfxVolSlider.value = 0.5f;
         fovSlider.value = 60f;
-        sensSlider.value = 300f;
+        sensSlider.value = 900f;
         headBobToggle.isOn = true;
         screenShakeToggle.isOn = true;
         
