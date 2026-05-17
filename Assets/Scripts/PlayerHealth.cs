@@ -6,6 +6,11 @@ public class PlayerHealth : MonoBehaviour
     [Header("Health Settings")]
     public float maxHealth = 100f;
     private float currentHealth;
+    public float CurrentHealth
+    { 
+        get { return currentHealth; }
+        private set { currentHealth = value; }
+    }
 
     [Header("Invincibility Status")]
     private bool isInvincible = false;
@@ -14,6 +19,10 @@ public class PlayerHealth : MonoBehaviour
     private void Start()
     {
         currentHealth = maxHealth;
+        if (PlayerData.HasData == true)
+        {
+            this.currentHealth = PlayerData.SavedHP;
+        }
     }
 
     public void TakeDamage(float damageAmount)
@@ -52,7 +61,7 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log("Player has died!");
-        
+        PlayerData.ResetData();
         if (GameManager.Instance != null)
         {
             GameManager.Instance.GameOver();

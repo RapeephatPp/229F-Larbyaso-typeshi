@@ -15,6 +15,23 @@ public class LevelMove : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            PlayerHealth playerScript = other.GetComponent<PlayerHealth>();
+            var shotgunScript = other.GetComponentInChildren<Shotgun>();
+
+            if (playerScript != null)
+            {
+                PlayerData.SavedHP = playerScript.CurrentHealth;               
+                PlayerData.HasData = true;
+
+                Debug.Log($"Saved Data: HP={PlayerData.SavedHP}");
+            }
+            if (shotgunScript != null)
+            {
+                PlayerData.SavedTotalAmmo = shotgunScript.TotalAmmo;
+                PlayerData.SavedcurrentAmmo = shotgunScript.CurrentAmmo;
+                PlayerData.HasData = true;
+                Debug.Log($"Saved Ammo: Total={shotgunScript.TotalAmmo}, Current={shotgunScript.CurrentAmmo}");
+            }
             GoToNextLevel();
         }
     }

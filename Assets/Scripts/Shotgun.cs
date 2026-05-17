@@ -77,7 +77,17 @@ public class Shotgun : MonoBehaviour
     private float nextFireTime = 0f;
     
     private int currentAmmo; 
+    public int CurrentAmmo
+    {
+        get { return currentAmmo; }
+        private set {currentAmmo = value; }
+    }
     private int totalAmmo;   
+    public int TotalAmmo
+    {
+        get { return totalAmmo; }
+        private set { totalAmmo = value; }
+    }
 
     private Vector2 currentSway;
     private Vector2 currentBob;
@@ -89,6 +99,11 @@ public class Shotgun : MonoBehaviour
     {
         currentAmmo = magSize; 
         totalAmmo = startingTotalAmmo;
+        if (PlayerData.HasData == true)
+        {
+            this.currentAmmo = PlayerData.SavedcurrentAmmo;
+            this.totalAmmo = PlayerData.SavedTotalAmmo;
+        }
 
         if (gunRectTransform != null) originalPosition = gunRectTransform.anchoredPosition;
         if (playerCamera == null) playerCamera = Camera.main;

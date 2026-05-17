@@ -40,8 +40,10 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        PlayerData.ResetData();
 
         // เช็คว่าเพิ่งจบเกมมาหรือเปล่า (เปิดหน้า Credits)
         if (PlayerPrefs.GetInt("ShowCreditsOnLoad", 0) == 1)
