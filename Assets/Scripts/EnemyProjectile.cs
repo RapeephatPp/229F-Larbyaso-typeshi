@@ -1,18 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// กระสุนที่ศัตรูระยะไกล (RangedEnemyAI) ยิงออกมา
-/// - บินตรงไปในทิศทางที่กำหนด
-/// - ชนผู้เล่น → สร้างดาเมจ + ผลักกระเด็น
-/// - ชนอย่างอื่น หรือหมดเวลา → ทำลายตัวเอง
-/// 
-/// วิธีใช้:
-/// 1. สร้าง Empty GameObject → เพิ่ม Script นี้
-/// 2. เพิ่ม SphereCollider (Is Trigger = true, Radius ~0.2)
-/// 3. เพิ่ม Rigidbody (Use Gravity = false, Is Kinematic = true)
-/// 4. (ตัวเลือก) เพิ่ม LineRenderer หรือ TrailRenderer สำหรับ Visual
-/// 5. Save เป็น Prefab แล้วลากไปใส่ช่อง projectilePrefab ของ RangedEnemyAI
-/// </summary>
+
 public class EnemyProjectile : MonoBehaviour
 {
     [Header("Projectile Stats")]
@@ -39,9 +27,7 @@ public class EnemyProjectile : MonoBehaviour
     private Vector3 direction;
     private bool isInitialized = false;
 
-    /// <summary>
-    /// เรียกโดย RangedEnemyAI เพื่อกำหนดทิศทางการบิน
-    /// </summary>
+    
     public void Initialize(Vector3 fireDirection)
     {
         direction = fireDirection.normalized;

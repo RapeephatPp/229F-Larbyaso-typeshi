@@ -1,20 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// ศัตรูระยะไกลแบบยืนประจำจุด (Stationary Ranged Enemy)
-/// - ยืนอยู่กับที่ ไม่เคลื่อนที่ (ไม่ต้องใช้ NavMesh)
-/// - หมุนตัวตามผู้เล่นเมื่ออยู่ในระยะตรวจจับ
-/// - ตรวจ Line of Sight (Raycast) ก่อนยิง
-/// - แสดงเส้นเล็งเตือน (Warning Laser) ก่อนยิง
-/// - ยิง Projectile เข้าหาผู้เล่นตามจังหวะ
-/// 
-/// วิธีใช้:
-/// 1. สร้าง GameObject (ใส่ Sprite + Billboard ถ้าต้องการ)
-/// 2. เพิ่ม Component: RangedEnemyAI + EnemyHealth
-/// 3. สร้าง Child Empty Object ชื่อ "MuzzlePoint" วางตรงจุดที่กระสุนจะออก
-/// 4. ลาก EnemyProjectile Prefab ใส่ช่อง projectilePrefab
-/// 5. วางในแมพตรงจุดที่ต้องการ (~1-2 ตัว)
-/// </summary>
+
 public class RangedEnemyAI : MonoBehaviour
 {
     // ==========================================
