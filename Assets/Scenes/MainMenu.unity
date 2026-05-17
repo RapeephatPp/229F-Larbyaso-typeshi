@@ -4373,7 +4373,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "Group Name\n        Larbyaso\n  Rapeephat Pratuangthip 1670704269 - Player
-    System , Level 1 , Game Manager , UI , Pixel Sprites \n  Thanathat Preeda  1670702669
+    System , Level 1 , Game Designer , UI , Pixel Sprites.\n  Thanathat Preeda  1670702669
     - Enemy System , Level 2 , Sound System\n  Supasuda Sriwannawat 1670705852 -
     Obstacle System , Level 3 , Object System\n\nAssets\n- Grid Master From Decimate
     \n- Sound From https://pixabay.com/sound-effects/\n-  Retro FPS weapon Pack \nFrom
@@ -6579,7 +6579,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1598174731
 RectTransform:
   m_ObjectHideFlags: 0
