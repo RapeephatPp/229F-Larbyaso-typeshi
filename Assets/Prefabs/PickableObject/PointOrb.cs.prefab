@@ -130,7 +130,7 @@ MonoBehaviour:
   rotateSpeed: 90
   bobHeight: 0.3
   bobSpeed: 2
-  collectSound: {fileID: 0}
+  collectSound: {fileID: 8300000, guid: 722077a999dbfd547a5eb96c57ff11ae, type: 3}
   collectParticle: {fileID: 0}
 --- !u!1 &2348655606690129247
 GameObject:

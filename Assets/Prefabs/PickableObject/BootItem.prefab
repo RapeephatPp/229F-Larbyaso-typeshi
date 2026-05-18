@@ -128,6 +128,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BootspeedItem
   speedMultiplier: 1.6
   boostDuration: 7
+  rotateSpeed: 90
+  bobHeight: 0.3
+  bobSpeed: 2
+  collectSound: {fileID: 8300000, guid: 722077a999dbfd547a5eb96c57ff11ae, type: 3}
+  collectParticle: {fileID: 0}
 --- !u!1 &7454437385244471333
 GameObject:
   m_ObjectHideFlags: 0
